@@ -13,18 +13,13 @@
 int main(int argc, char *argv[])
 {
 	int sockfd;
-	struct sockaddr_un src = { .sun_family = AF_UNIX, .sun_path = "/tmp/socket-client", };
 	struct sockaddr_un dst = { .sun_family = AF_UNIX, .sun_path = "/tmp/socket-server", };
 	char buf[] = "0123456789abcdef0123456789abcdef";
 
-	unlink(src.sun_path);
 	sockfd = socket(AF_UNIX, SOCK_DGRAM, 0);
-	bind(sockfd, (struct sockaddr *)&src, sizeof(src));
-	connect(sockfd, (struct sockaddr *)&dst, sizeof(dst));
-
-	write(sockfd, buf, sizeof(buf));
-
+	sendto(sockfd, buf, sizeof(buf), 0, (const struct sockaddr *)&dst, sizeof(dst));
 	close(sockfd);
+
 	unlink(dst.sun_path);
 	exit(EXIT_SUCCESS);
 }
