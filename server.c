@@ -11,9 +11,7 @@
 
 int main(int argc, char *argv[])
 {
-	int err;
 	int conn;
-	int bytes;
 	struct sockaddr_un addr = {
 		.sun_family = AF_UNIX,
 		.sun_path = SOCKET_NAME,
@@ -21,31 +19,16 @@ int main(int argc, char *argv[])
 
 	unlink(SOCKET_NAME);
 	conn = socket(AF_UNIX, SOCK_SEQPACKET, 0);
-	if (conn == -1)
-		exit(EXIT_FAILURE);
-
-	err = bind(conn, (const struct sockaddr *)&addr, sizeof(addr));
-	if (err)
-		exit(EXIT_FAILURE);
-
-	err = listen(conn, 20);
-	if (err)
-		exit(EXIT_FAILURE);
-
+	bind(conn, (const struct sockaddr *)&addr, sizeof(addr));
+	listen(conn, 20);
 	for (;;) {
 		int data_socket;
 		int sum = 0;
 		char buffer[] = "0123456789abcdef0123456789abcdef";
 
 		data_socket = accept(conn, NULL, NULL);
-		if (data_socket < 0)
-			exit(EXIT_FAILURE);
-
 		for(;;) {
-			bytes = read(data_socket, buffer, sizeof(buffer));
-			if (bytes < 0)
-				exit(EXIT_FAILURE);
-
+			read(data_socket, buffer, sizeof(buffer));
 			if (!strncmp(buffer, "END", 3))
 				break;
 
@@ -53,10 +36,7 @@ int main(int argc, char *argv[])
 		}
 
 		sprintf(buffer, "%d", sum);
-		bytes = write(data_socket, buffer, sizeof(buffer));
-		if (bytes < 0)
-			exit(EXIT_FAILURE);
-
+		write(data_socket, buffer, sizeof(buffer));
 		close(data_socket);
 	}
 
