@@ -12,21 +12,19 @@
 
 int main(int argc, char *argv[])
 {
-	int i;
-	char buffer[] = "0123456789abcdef0123456789abcdef";
-	int soc;
-	struct sockaddr_un addr = {
-		.sun_family = AF_UNIX,
-		.sun_path =  SOCKET_NAME,
-	};
+	int sockfd;
+	struct sockaddr_un src = { .sun_family = AF_UNIX, .sun_path = "/tmp/socket-client", };
+	struct sockaddr_un dst = { .sun_family = AF_UNIX, .sun_path = "/tmp/socket-server", };
+	char buf[] = "0123456789abcdef0123456789abcdef";
 
-	soc = socket(AF_UNIX, SOCK_SEQPACKET, 0);
-	connect(soc, (const struct sockaddr *)&addr, sizeof(addr));
-	for (i = 1; i < argc; ++i)
-		write(soc, argv[i], strlen(argv[i]) + 1);
-	write(soc, "END", 3);
-	read(soc, buffer, sizeof(buffer));
-	printf("Result = %s\n", buffer);
-	close(soc);
+	unlink(src.sun_path);
+	sockfd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	bind(sockfd, (struct sockaddr *)&src, sizeof(src));
+	connect(sockfd, (struct sockaddr *)&dst, sizeof(dst));
+
+	write(sockfd, buf, sizeof(buf));
+
+	close(sockfd);
+	unlink(dst.sun_path);
 	exit(EXIT_SUCCESS);
 }

@@ -7,40 +7,23 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include "connection.h"
 
 int main(int argc, char *argv[])
 {
-	int conn;
-	struct sockaddr_un addr = {
-		.sun_family = AF_UNIX,
-		.sun_path = SOCKET_NAME,
-	};
+	int sockfd;
+	struct sockaddr_un src = { .sun_family = AF_UNIX, .sun_path = "/tmp/socket-server", };
+	struct sockaddr_un dst = { .sun_family = AF_UNIX, .sun_path = "/tmp/socket-client", };
+	char buf[1024];
 
-	unlink(SOCKET_NAME);
-	conn = socket(AF_UNIX, SOCK_SEQPACKET, 0);
-	bind(conn, (const struct sockaddr *)&addr, sizeof(addr));
-	listen(conn, 20);
-	for (;;) {
-		int data_socket;
-		int sum = 0;
-		char buffer[] = "0123456789abcdef0123456789abcdef";
+	unlink(src.sun_path);
+	sockfd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	bind(sockfd, (struct sockaddr *)&src, sizeof(src));
+	connect(sockfd, (struct sockaddr *)&dst, sizeof(dst));
 
-		data_socket = accept(conn, NULL, NULL);
-		for(;;) {
-			read(data_socket, buffer, sizeof(buffer));
-			if (!strncmp(buffer, "END", 3))
-				break;
+	read(sockfd, buf, sizeof(buf));
+	printf("buf=%s\n", buf);
 
-			sum += atoi(buffer);
-		}
-
-		sprintf(buffer, "%d", sum);
-		write(data_socket, buffer, sizeof(buffer));
-		close(data_socket);
-	}
-
-	close(conn);
-	unlink(SOCKET_NAME);
+	close(sockfd);
+	unlink(src.sun_path);
 	exit(EXIT_SUCCESS);
 }
