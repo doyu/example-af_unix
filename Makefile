@@ -1,4 +1,4 @@
-all: stream dgram netlink
+all: netlink
 
 stream: server_stream.c client_stream.c connection.h
 	gcc server_stream.c -o server_stream.out -Wall
